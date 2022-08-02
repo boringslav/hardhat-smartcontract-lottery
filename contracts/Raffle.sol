@@ -12,7 +12,7 @@ error Raffle__NotEnoughETHEntered();
 contract Raffle {
     // State Variables
     uint256 private immutable i_entranceFee;
-    address[] private s_players;
+    address payable[] private s_players;
 
     constructor(uint256 entranceFee) {
         i_entranceFee = entranceFee;
