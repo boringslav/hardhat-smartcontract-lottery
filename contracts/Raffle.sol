@@ -35,6 +35,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
     /* Lottery Variables */
     address private s_recentWinner;
     RaffleState private s_raffleState;
+    uint256 private s_lastTimeStamp;
+    uint256 private immutable i_interval;
 
     /*Events - Named events with the function name reversed (convention) */
     event RaffleEnter(address indexed player);
@@ -46,7 +48,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
         uint256 entranceFee,
         bytes32 gasLane,
         uint64 subscriptionId,
-        uint32 callbackGasLimit
+        uint32 callbackGasLimit,
+        uint256 interval
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         i_entranceFee = entranceFee;
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
@@ -54,6 +57,8 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
         i_subId = subscriptionId;
         i_callBackGasLimit = callbackGasLimit;
         s_raffleState = RaffleState.OPEN;
+        s_lastTimeStamp = block.timestamp;
+        i_interval = interval;
     }
 
     /**
@@ -74,7 +79,13 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
             bool upkeepNeeded,
             bytes memory /* performData */
         )
-    {}
+    {
+        bool isOpen = (RaffleState.OPEN == s_raffleState);
+        bool timePassed = (block.timestamp - s_lastTimeStamp) > i_interval;
+        bool hasPlayers = (s_players.length > 0);
+        bool hasBalance = address(this).balance > 0;
+        upkeepNeeded = (isOpen && timePassed && hasPlayers && hasBalance); //automatically returned since we have the variable in the returns field
+    }
 
     function performUpkeep(
         bytes calldata /* performData */
