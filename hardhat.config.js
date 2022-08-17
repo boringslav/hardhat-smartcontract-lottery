@@ -4,10 +4,9 @@ require("hardhat-deploy")
 require("solidity-coverage")
 require("hardhat-gas-reporter")
 require("hardhat-contract-sizer")
-require("dotenv").config()
+require("dotenv").config({ path: __dirname + "/.env" })
 
 const { RINKEBY_RPC_URL, PRIVATE_KEY, COINMARKETCAP_API_KEY, ETHERSCAN_API_KEY } = process.env
-
 module.exports = {
     defaultNetwork: "hardhat",
     networks: {
@@ -18,7 +17,7 @@ module.exports = {
         rinkeby: {
             chainId: 4,
             blockConfirmations: 6,
-            url: RINKEBY_RPC_URL,
+            url: `${RINKEBY_RPC_URL}`,
             accounts: [PRIVATE_KEY],
         },
     },
