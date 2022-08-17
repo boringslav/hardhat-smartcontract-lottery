@@ -1,9 +1,3 @@
-//Raffle
-//Enter the lottery (paying some amount)
-//Pick a random winner (verifiably random)
-//Winner to be selected exery X minuts -> completely automated
-//Chainlink Oracle -> Randomness, Automated Execution (Chainlink Keepers)
-
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
@@ -14,7 +8,13 @@ import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 error Raffle__NotEnoughETHEntered();
 error Raffle_TransferFailed();
 error Raffle_NotOpen();
+error Raffle_UpkeepNotNeeded(uint256 currentBalance, uint256 numPlayers, uint256 raffleState);
 
+/** @title A sample Raffle Contract
+ *  @author Borislav Stoyanov
+ *  @notice This contract is for creating an untamperable decentralized smart contract
+ *  @dev  This implements Chainlink VRF v2 and Chainlink Keepers *
+ */
 contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
     /* Type declarations */
     enum RaffleState {
@@ -43,6 +43,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
     event RandomWinnerRequest(uint256 indexed requestId);
     event WinnerPicked(address indexed winner);
 
+    /** Functions */
     constructor(
         address vrfCoordinatorV2,
         uint256 entranceFee,
@@ -71,9 +72,9 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
      * 4. The lottery should be in an "open" state
      */
     function checkUpkeep(
-        bytes calldata /* checkData */
+        bytes memory /* checkData */
     )
-        external
+        public
         override
         returns (
             bool upkeepNeeded,
@@ -89,23 +90,15 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
 
     function performUpkeep(
         bytes calldata /* performData */
-    ) external override {}
-
-    function enterRaffle() public payable {
-        if (msg.value < i_entranceFee) {
-            revert Raffle__NotEnoughETHEntered();
+    ) external override {
+        (bool upkeepNeeded, ) = checkUpkeep("");
+        if (!upkeepNeeded) {
+            revert Raffle_UpkeepNotNeeded(
+                address(this).balance,
+                s_players.length,
+                uint256(s_raffleState)
+            );
         }
-        if (s_raffleState != RaffleState.OPEN) {
-            revert Raffle_NotOpen();
-        }
-        s_players.push(payable(msg.sender));
-        emit RaffleEnter(msg.sender);
-    }
-
-    function requestRandomWinner() external {
-        /*Request the random number
-        Once we get the number, do something with it
-        2 transaction process */
 
         s_raffleState = RaffleState.CALCULATING;
 
@@ -120,6 +113,17 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
         emit RandomWinnerRequest(requestId);
     }
 
+    function enterRaffle() public payable {
+        if (msg.value < i_entranceFee) {
+            revert Raffle__NotEnoughETHEntered();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle_NotOpen();
+        }
+        s_players.push(payable(msg.sender));
+        emit RaffleEnter(msg.sender);
+    }
+
     function fulfillRandomWords(
         uint256, /* requestId */
         uint256[] memory randomWords
@@ -129,6 +133,7 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
         s_recentWinner = recentWinner;
         s_raffleState = RaffleState.OPEN;
         s_players = new address payable[](0);
+        s_lastTimeStamp = block.timestamp;
 
         (bool success, ) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
@@ -148,5 +153,25 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
 
     function getRecentWinner() public view returns (address) {
         return s_recentWinner;
+    }
+
+    function getRaffleState() public view returns (RaffleState) {
+        return s_raffleState;
+    }
+
+    function getNumWords() public pure returns (uint256) {
+        return NUM_WORDS;
+    }
+
+    function getNumberOfPlayers() public view returns (uint256) {
+        return s_players.length;
+    }
+
+    function getLatestTimestamp() public view returns (uint256) {
+        return s_lastTimeStamp;
+    }
+
+    function getRequestConfirmations() public pure returns (uint256) {
+        return REQUEST_CONFIRMATIONS;
     }
 }
