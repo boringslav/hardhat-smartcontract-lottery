@@ -46,11 +46,11 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
     /** Functions */
     constructor(
         address vrfCoordinatorV2,
-        uint256 entranceFee,
-        bytes32 gasLane,
         uint64 subscriptionId,
-        uint32 callbackGasLimit,
-        uint256 interval
+        bytes32 gasLane, // keyHash
+        uint256 interval,
+        uint256 entranceFee,
+        uint32 callbackGasLimit
     ) VRFConsumerBaseV2(vrfCoordinatorV2) {
         i_entranceFee = entranceFee;
         i_vrfCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
@@ -159,6 +159,10 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
         return s_raffleState;
     }
 
+    function getInterval() public view returns (uint256) {
+        return i_interval;
+    }
+
     function getNumWords() public pure returns (uint256) {
         return NUM_WORDS;
     }
@@ -173,9 +177,5 @@ contract Raffle is VRFConsumerBaseV2, KeeperCompatible {
 
     function getRequestConfirmations() public pure returns (uint256) {
         return REQUEST_CONFIRMATIONS;
-    }
-
-    function getInterval() public view returns (uint256) {
-        return i_interval;
     }
 }
