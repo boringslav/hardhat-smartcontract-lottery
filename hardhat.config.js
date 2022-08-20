@@ -30,6 +30,17 @@ module.exports = {
     },
     etherscan: {
         apiKey: ETHERSCAN_API_KEY,
+        // In case the module can't find the rinkeby etherscan automatically
+        customChains: [
+            {
+                network: "rinkeby",
+                chainId: 4,
+                urls: {
+                    apiURL: "https://api-rinkeby.etherscan.io/api",
+                    browserURL: "https://rinkeby.etherscan.io",
+                },
+            },
+        ],
     },
     solidity: "0.8.9",
     namedAccounts: {
