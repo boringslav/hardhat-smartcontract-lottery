@@ -5,7 +5,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
 
 !developmentChains.includes(network.name)
     ? describe.skip
-    : describe("Raffle Unit Tests", async () => {
+    : describe("Raffle Unit Tests", () => {
           let raffle, raffleContract, vrfCoordinatorV2Mock, raffleEntranceFee, interval, player // , deployer
 
           beforeEach(async () => {
@@ -67,7 +67,7 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
               })
           })
 
-          describe("checkUpkeep", async () => {
+          describe("checkUpkeep", () => {
               it("returns false if people haven't sent any ETH", async () => {
                   await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
                   await network.provider.send("evm_mine", [])
@@ -83,6 +83,13 @@ const { developmentChains, networkConfig } = require("../../helper-hardhat-confi
                   const raffleState = await raffle.getRaffleState() // stores the new state
                   const { upkeepNeeded } = await raffle.callStatic.checkUpkeep("0x") // upkeepNeeded = (timePassed && isOpen && hasBalance && hasPlayers)
                   assert.equal(raffleState.toString() == "1", upkeepNeeded == false)
+              })
+              it("returns true if enough time has passed, has players, eth, and is open", async () => {
+                  await raffle.enterRaffle({ value: raffleEntranceFee })
+                  await network.provider.send("evm_increaseTime", [interval.toNumber() + 1])
+                  await network.provider.request({ method: "evm_mine", params: [] })
+                  const { upkeepNeeded } = await raffle.callStatic.checkUpkeep("0x") // upkeepNeeded = (timePassed && isOpen && hasBalance && hasPlayers)
+                  assert(upkeepNeeded)
               })
           })
       })
