@@ -26,7 +26,10 @@ module.exports = {
         currency: "USD",
         outputFile: "gas-report.txt",
         noColors: true,
-        // coinmarketcap: COINMARKETCAP_API_KEY
+        coinmarketcap: COINMARKETCAP_API_KEY,
+    },
+    etherscan: {
+        apiKey: ETHERSCAN_API_KEY,
     },
     solidity: "0.8.9",
     namedAccounts: {
