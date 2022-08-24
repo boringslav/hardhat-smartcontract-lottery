@@ -17,6 +17,7 @@ const networkConfig = {
         callbackGasLimit: "500000",
         interval: "30",
     },
+    localhost: { chainId: 31337 || 1337, blockConfirmations: 1 },
 }
 
 const developmentChains = ["hardhat", "localhost"]
